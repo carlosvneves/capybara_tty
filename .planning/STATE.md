@@ -11,7 +11,7 @@
 Phase: 1 of 4 (Core Chess Engine + UI)
 Plan: 0 of TBD
 Status: Ready to plan
-Last activity: 2026-04-21 — Project initialized; ROADMAP.md, REQUIREMENTS.md, and exploration notes created
+Last activity: 2026-04-21 — Phase 1 context gathered via discuss-phase
 
 Progress: [░░░░░░░░░░] 0%
 
