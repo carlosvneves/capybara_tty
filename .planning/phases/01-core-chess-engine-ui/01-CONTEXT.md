@@ -1,0 +1,112 @@
+# Phase 1: Core Chess Engine + UI - Context
+
+**Gathered:** 2026-04-21
+**Status:** Ready for planning
+
+<domain>
+## Phase Boundary
+
+Deliver a fully playable browser chess game: embedded Minimax engine (Rust/WASM via shakmaty), TUI-style board renderer, PGN-only keyboard input, pre-game configuration menu, time controls, and physical board sync mode. All visual and interaction contracts are locked in `01-UI-SPEC.md`.
+
+This phase does NOT include: Stockfish integration (Phase 2), tutor overlays (Phase 3), LLM explanations (Phase 4), opening book, blunder shield, or drag-and-drop input.
+
+</domain>
+
+<decisions>
+## Implementation Decisions
+
+### Engine: Embedded Minimax
+
+- **D-01:** Difficulty model is **fixed search depth** — no randomness, no time-limiting.
+- **D-02:** Three difficulty levels exposed in pre-game config: **Easy (depth 1)**, **Medium (depth 3)**, **Hard (depth 5)**.
+- **D-03:** These difficulty levels apply to the **embedded Minimax engine only**. Stockfish (Phase 2) uses its own skill level system and is not constrained by these levels.
+- **D-04:** The engine always **moves instantly** — it never counts against the game clock.
+
+### PGN Input Error Handling
+
+- **D-05:** Invalid move (illegal or malformed PGN): **flash command input red + clear**. No blocking dialog. No error message retained. Child retypes.
+- **D-06:** Ambiguous PGN (e.g., two rooks can go to d1): treated the same as invalid — **flash red + clear**. Child must type the fully disambiguated notation (e.g., `R1d1`, `Rad1`). This teaches correct PGN.
+
+### Clock / Time Controls
+
+- **D-07:** Clock is **optional**. The pre-game config includes "No clock" as a valid time control selection.
+- **D-08:** When **No clock** is selected: the clock display is **hidden entirely** from the layout. No elapsed time shown.
+- **D-09:** When time runs out: **immediate forfeit**. No grace period. Standard chess behavior.
+- **D-10:** **Custom** time control: user configures **minutes only** (no per-move increment). Example: "15 min".
+- **D-11:** Preset time controls from REQ-007: UltraBullet, Bullet, Blitz, Rapid, Classical, No clock, Custom.
+
+### Game-Over and Resign Flow
+
+- **D-12:** Game result (checkmate, stalemate, draw, timeout): displayed as an **inline banner in the game shell**. Board stays visible (final position). No overlay. Terminal-style message (e.g., "Checkmate — White wins").
+- **D-13:** Resign: player types **`resign`** in the command input. No confirmation prompt. Consistent with keyboard-driven PGN input model.
+- **D-14:** After game over (banner shown): command input area changes to **"Press Enter for new game"** prompt. User presses Enter (or types `new`) to return to pre-game config. Board stays on final position until user acts.
+
+### Claude's Discretion
+
+- Specific draw conditions to detect (threefold repetition, fifty-move rule, insufficient material, stalemate) — implement all that shakmaty exposes natively.
+- Exact wording of game-result banner strings.
+- Move history panel format (algebraic, move numbers, scroll behavior) — follow UI-SPEC conventions.
+- Board highlight style for last move (if any) — follow UI-SPEC accent color.
+
+</decisions>
+
+<canonical_refs>
+## Canonical References
+
+**Downstream agents MUST read these before planning or implementing.**
+
+### Visual and Interaction Contracts
+- `.planning/phases/01-core-chess-engine-ui/01-UI-SPEC.md` — Full visual contract: design system, spacing, typography, color palette, component specs, layout, keyboard nav. All visual decisions are locked here.
+
+### Requirements
+- `.planning/REQUIREMENTS.md` — REQ-001 (PGN-only), REQ-003 (landscape), REQ-004 (Unicode/ASCII), REQ-007 (pre-game config), REQ-009 (physical board spacebar)
+
+### Project State
+- `.planning/STATE.md` — Accumulated decisions and current position
+- `.planning/ROADMAP.md` — Phase goals, success criteria, plan structure
+
+### Codebase
+- `src/lib.rs` — WASM entry point; all `#[wasm_bindgen]` exports live here (currently skeleton)
+- `Cargo.toml` — `shakmaty = "0.30.0"` and `wasm-bindgen` are the only relevant deps
+- `CLAUDE.md` — Build commands, WASM constraints, architecture notes
+
+</canonical_refs>
+
+<code_context>
+## Existing Code Insights
+
+### Reusable Assets
+- `src/utils.rs`: `set_panic_hook()` — call at WASM init for better panic messages in browser console. Already wired up.
+- `shakmaty = "0.30.0"`: chess rules engine; handles move legality, position representation, PGN parsing. Phase 1 builds on top of this — do not reimplement chess rules.
+
+### Established Patterns
+- `wasm-bindgen`: all JS-callable functions need `#[wasm_bindgen]` attribute. See `src/lib.rs` for the pattern.
+- `crate-type = ["cdylib", "rlib"]`: cdylib for WASM output, rlib enables `cargo test` on native. Do not change.
+- Release profile: `opt-level = "s"` (size optimization for Smart TV targets). Preserve this.
+
+### Integration Points
+- Frontend JS consumes the `pkg/` directory generated by `wasm-pack build --target web`. Never edit `pkg/` manually.
+- Browser WASM tests: `tests/web.rs` + `wasm-pack test --headless --firefox`.
+
+</code_context>
+
+<specifics>
+## Specific Ideas
+
+- Physical board mode: after engine move, game pauses. **Spacebar** resumes. This is the only input besides PGN. (REQ-009)
+- Board font size controlled via `--board-font-size` CSS custom property (default 24px). TV scaling use case.
+- Target devices: PC, tablet, Smart TV (Bluetooth keyboard). Landscape-only, no portrait support.
+
+</specifics>
+
+<deferred>
+## Deferred Ideas
+
+None — discussion stayed within phase scope.
+
+</deferred>
+
+---
+
+*Phase: 01-core-chess-engine-ui*
+*Context gathered: 2026-04-21*
