@@ -1,7 +1,8 @@
 ---
 phase: 1
 slug: core-chess-engine-ui
-status: draft
+status: approved
+reviewed_at: 2026-04-21
 shadcn_initialized: false
 preset: none
 created: 2026-04-21
