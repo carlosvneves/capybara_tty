@@ -70,8 +70,15 @@ git clone https://github.com/seu-usuario/capybara-tty.git
 wasm-pack build --target web
 ```
 
+#### Sync `www` to GitHub Pages (`docs`)
+
+Use a single command to rebuild wasm and mirror the playable site to `docs/`:
+
+```bash
+./scripts/publish_pages.sh
+```
+
 *“Transforming capybaras into grandmasters, one PGN at a time.”*
 
 *“Transformando capivaras em mestres, um PGN de cada vez.”*
-
 
