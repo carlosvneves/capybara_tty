@@ -1,0 +1,18 @@
+{
+  "name": "capybara_tty",
+  "type": "module",
+  "collaborators": [
+    "carlosneves <carlosneves@macbook-pro.local>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "capybara_tty_bg.wasm",
+    "capybara_tty.js",
+    "capybara_tty.d.ts"
+  ],
+  "main": "capybara_tty.js",
+  "types": "capybara_tty.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
