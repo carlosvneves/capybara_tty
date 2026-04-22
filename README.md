@@ -1,4 +1,4 @@
-![capybara-tty](docs/capybara-tty.png)
+![capybara-tty](www/capybara-tty.png)
 
 
 # 🦦 capybara-tty

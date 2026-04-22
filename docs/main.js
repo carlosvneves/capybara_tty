@@ -15,6 +15,15 @@ const PIECES_UNICODE = {
   p: "♟",
 };
 
+const PIECES_UNICODE_FILLED = {
+  k: "♚",
+  q: "♛",
+  r: "♜",
+  b: "♝",
+  n: "♞",
+  p: "♟",
+};
+
 const PIECES_ASCII = {
   K: "K",
   Q: "Q",
@@ -82,6 +91,7 @@ const I18N = {
     pgn_empty: "Game not started",
     material_even: "Even",
     play_instructions: "Type your move in PGN notation (examples: e4, Nf3, O-O) and press Enter.",
+    you_play: "You play",
     cmd_placeholder: "e4, Nf3, O-O...",
     sync_waiting: "[ WAITING - press SPACE to continue ]",
     config_engine: "Engine",
@@ -91,8 +101,9 @@ const I18N = {
     config_tutor_mode: "Tutor Mode",
     config_physical_mode: "Physical Board",
     config_piece_mode: "Pieces",
-    resumed_suffix: "Press Enter or type new for new game.",
+    resumed_suffix: "Type home to return to menu.",
     resigned_suffix: "resigned.",
+    home_button: "Home",
   },
   "pt-BR": {
     rotate_message: "Gire o dispositivo para o modo paisagem para jogar.",
@@ -111,6 +122,7 @@ const I18N = {
     pgn_empty: "Partida nao iniciada",
     material_even: "Igual",
     play_instructions: "Digite seu lance em notacao PGN (ex: e4, Nf3, O-O) e pressione Enter.",
+    you_play: "Voce joga com",
     cmd_placeholder: "e4, Nf3, O-O...",
     sync_waiting: "[ AGUARDANDO - pressione ESPACO para continuar ]",
     config_engine: "Motor",
@@ -120,8 +132,9 @@ const I18N = {
     config_tutor_mode: "Modo Tutor",
     config_physical_mode: "Tabuleiro Fisico",
     config_piece_mode: "Pecas",
-    resumed_suffix: "Pressione Enter ou digite new para novo jogo.",
+    resumed_suffix: "Digite home para voltar ao menu.",
     resigned_suffix: "desistiu.",
+    home_button: "Inicio",
   },
 };
 
@@ -201,22 +214,26 @@ function queryDom() {
   dom.panelMaterialTitle = document.getElementById("panel-material-title");
   dom.clockTitle = document.getElementById("clock-title");
   dom.playInstructions = document.getElementById("play-instructions");
+  dom.playerSide = document.getElementById("player-side");
   dom.gameShell = document.getElementById("game-shell");
   dom.board = document.getElementById("board");
   dom.syncIndicator = document.getElementById("sync-indicator");
   dom.banner = document.getElementById("game-over-banner");
+  dom.homeBtn = document.getElementById("home-btn");
   dom.cmdInput = document.getElementById("cmd-input");
   dom.moveHistory = document.getElementById("move-history");
   dom.pgnText = document.getElementById("pgn-text");
   dom.materialText = document.getElementById("material-text");
   dom.clockBox = document.getElementById("clock-box");
   dom.clockText = document.getElementById("clock-text");
+  dom.homeButton = document.getElementById("home-button");
   dom.panelToggle = document.getElementById("panel-toggle");
   dom.panelHistory = document.getElementById("panel-history");
   dom.panelPgn = document.getElementById("panel-pgn");
   dom.panelMaterial = document.getElementById("panel-material");
   dom.syncIndicator = document.getElementById("sync-indicator");
 }
+
 
 function uiText(key) {
   return I18N[state.language]?.[key] || I18N.en[key] || key;
@@ -238,8 +255,10 @@ function applyLanguage() {
   dom.panelMaterialTitle.textContent = uiText("panel_material_title");
   dom.clockTitle.textContent = uiText("panel_clock_title");
   dom.playInstructions.textContent = uiText("play_instructions");
+  dom.playerSide.textContent = `${uiText("you_play")}: ${uiValue(playerColor())}`;
   dom.cmdInput.placeholder = uiText("cmd_placeholder");
   dom.syncIndicator.textContent = uiText("sync_waiting");
+  dom.homeBtn.textContent = uiText("home_button");
 }
 
 async function loadWasmBindings() {
@@ -311,22 +330,101 @@ function parseBoardFromFen(fen) {
 function pieceGlyph(piece) {
   if (piece === ".") return "";
   if (state.config.pieceMode === "ASCII") return PIECES_ASCII[piece] || piece;
-  return PIECES_UNICODE[piece] || piece;
+  const filled = PIECES_UNICODE_FILLED[piece.toLowerCase()];
+  return filled || PIECES_UNICODE[piece] || piece;
+}
+
+function sideToMove(fen) {
+  const token = (typeof fen === "string" ? fen.split(" ")[1] : "") || "w";
+  return token === "b" ? "Black" : "White";
+}
+
+function playerColor() {
+  return state.config.color;
+}
+
+function isPlayersTurn() {
+  return sideToMove(state.fen) === playerColor();
 }
 
 function renderBoard() {
-  const rows = parseBoardFromFen(state.fen);
+  const blackPerspective = playerColor() === "Black";
+  const baseRows = parseBoardFromFen(state.fen);
+  const rows =
+    blackPerspective ? [...baseRows].reverse().map((row) => [...row].reverse()) : baseRows;
+  const files = blackPerspective ? ["h", "g", "f", "e", "d", "c", "b", "a"] : ["a", "b", "c", "d", "e", "f", "g", "h"];
+  const ranks = blackPerspective ? ["1", "2", "3", "4", "5", "6", "7", "8"] : ["8", "7", "6", "5", "4", "3", "2", "1"];
+
+  const frame = document.createElement("div");
+  frame.className = "board-frame";
+
+  const topFiles = document.createElement("div");
+  topFiles.className = "board-coord-row";
+  files.forEach((file) => {
+    const mark = document.createElement("div");
+    mark.className = "board-coord";
+    mark.textContent = file;
+    topFiles.appendChild(mark);
+  });
+
+  const boardMain = document.createElement("div");
+  boardMain.className = "board-main";
+
+  const leftRanks = document.createElement("div");
+  leftRanks.className = "board-coord-col";
+  ranks.forEach((rank) => {
+    const mark = document.createElement("div");
+    mark.className = "board-coord";
+    mark.textContent = rank;
+    leftRanks.appendChild(mark);
+  });
+
   const grid = document.createElement("div");
   grid.className = "board-grid";
   rows.forEach((row, rank) => {
     row.forEach((piece, file) => {
       const cell = document.createElement("div");
       cell.className = `board-square ${(rank + file) % 2 === 0 ? "square-light" : "square-dark"}`;
-      cell.textContent = pieceGlyph(piece) || "\u00A0";
+      if (piece === ".") {
+        cell.textContent = "\u00A0";
+      } else {
+        const glyph = document.createElement("span");
+        const isWhitePiece = piece === piece.toUpperCase();
+        glyph.className = `piece-glyph ${isWhitePiece ? "piece-white" : "piece-black"}`;
+        glyph.textContent = pieceGlyph(piece);
+        cell.appendChild(glyph);
+      }
       grid.appendChild(cell);
     });
   });
-  dom.board.replaceChildren(grid);
+
+  const rightRanks = document.createElement("div");
+  rightRanks.className = "board-coord-col";
+  ranks.forEach((rank) => {
+    const mark = document.createElement("div");
+    mark.className = "board-coord";
+    mark.textContent = rank;
+    rightRanks.appendChild(mark);
+  });
+
+  const bottomFiles = document.createElement("div");
+  bottomFiles.className = "board-coord-row";
+  files.forEach((file) => {
+    const mark = document.createElement("div");
+    mark.className = "board-coord";
+    mark.textContent = file;
+    bottomFiles.appendChild(mark);
+  });
+
+  boardMain.appendChild(leftRanks);
+  boardMain.appendChild(grid);
+  boardMain.appendChild(rightRanks);
+
+  frame.appendChild(topFiles);
+  frame.appendChild(boardMain);
+  frame.appendChild(bottomFiles);
+
+  dom.board.replaceChildren(frame);
 }
 
 function materialFromFen() {
@@ -437,7 +535,15 @@ function showConfig() {
   dom.configMenu.classList.remove("hidden");
   dom.gameShell.classList.add("hidden");
   dom.banner.classList.add("hidden");
+  dom.homeBtn.classList.add("hidden");
   renderConfigMenu();
+}
+
+function goHome() {
+  stopClock();
+  state.waitingPhysicalResume = false;
+  dom.syncIndicator.classList.add("hidden");
+  showConfig();
 }
 
 function setupClock() {
@@ -462,13 +568,33 @@ function startGame() {
   state.pgnMoves = [];
   state.fen = wasmApi().initial_fen();
   setupClock();
-  startClockFor(state.config.color === "White" ? "White" : "Black");
+  startClockFor(sideToMove(state.fen));
   dom.configMenu.classList.add("hidden");
   dom.gameShell.classList.remove("hidden");
   dom.syncIndicator.classList.add("hidden");
   dom.banner.classList.add("hidden");
+  dom.homeBtn.classList.add("hidden");
   dom.cmdInput.value = "";
   dom.cmdInput.focus();
+
+  // If player chose Black, let embedded engine play White first.
+  if (state.config.engine === "Embedded" && !isPlayersTurn()) {
+    const depth = EMBEDDED_DEPTH_BY_DIFFICULTY[state.config.difficulty] ?? 1;
+    const botResult = wasmApi().engine_move(state.fen, depth);
+    if (botResult.status === "applied") {
+      state.fen = botResult.fen;
+      state.pgnMoves.push(botResult.san);
+      state.moveHistory.push(botResult.san);
+    }
+    if (botResult.game_over) {
+      endGame(botResult.outcome || "Game over.");
+      renderAll();
+      return;
+    }
+  }
+
+  startClockFor(sideToMove(state.fen));
+
   renderAll();
 }
 
@@ -479,16 +605,25 @@ function endGame(message) {
   dom.syncIndicator.classList.add("hidden");
   dom.banner.textContent = `${message} ${uiText("resumed_suffix")}`;
   dom.banner.classList.remove("hidden");
+  dom.homeBtn.classList.remove("hidden");
 }
 
 function applyPlayerMove(input) {
   if (state.gameState === "ended") {
-    if (input === "new" || input === "") showConfig();
+    const normalized = input.toLowerCase();
+    if (normalized === "home" || normalized === "menu" || normalized === "new") {
+      showConfig();
+    }
     return;
   }
   if (input === "resign") {
-    endGame(`${uiValue(state.config.color)} ${uiText("resigned_suffix")}`);
+    endGame(`${uiValue(playerColor())} ${uiText("resigned_suffix")}`);
     dom.cmdInput.value = "";
+    return;
+  }
+
+  if (state.config.engine === "Embedded" && !isPlayersTurn()) {
+    dom.cmdInput.classList.add("invalid");
     return;
   }
 
@@ -528,10 +663,10 @@ function applyPlayerMove(input) {
       state.waitingPhysicalResume = true;
       dom.syncIndicator.classList.remove("hidden");
     } else {
-      startClockFor(state.config.color);
+      startClockFor(sideToMove(state.fen));
     }
   } else {
-    startClockFor(state.config.color);
+    startClockFor(sideToMove(state.fen));
   }
   renderAll();
 }
@@ -540,6 +675,7 @@ function renderAll() {
   renderBoard();
   renderHistory();
   renderMaterial();
+  dom.playerSide.textContent = `${uiText("you_play")}: ${uiValue(playerColor())}`;
   updateClockVisual();
   renderPanels();
 }
@@ -578,7 +714,6 @@ function handleConfigKey(event) {
   }
   if (event.key === "Enter") {
     startGame();
-    return;
   }
 }
 
@@ -596,7 +731,7 @@ function initKeybindings() {
       if (event.key === " ") {
         state.waitingPhysicalResume = false;
         dom.syncIndicator.classList.add("hidden");
-        startClockFor(state.config.color);
+        startClockFor(sideToMove(state.fen));
       }
       event.preventDefault();
       return;
@@ -615,11 +750,6 @@ function initKeybindings() {
     if (["m", "M"].includes(event.key)) {
       state.panelOpen.material = !state.panelOpen.material;
       renderPanels();
-      return;
-    }
-
-    if (state.gameState === "ended" && event.key === "Enter") {
-      showConfig();
       return;
     }
 
@@ -660,6 +790,16 @@ function initKeybindings() {
   dom.startGameBtn.addEventListener("click", () => {
     startGame();
   });
+
+  dom.homeBtn.addEventListener("click", () => {
+    showConfig();
+  });
+
+  if (dom.homeButton) {
+    dom.homeButton.addEventListener("click", () => {
+      goHome();
+    });
+  }
 
   dom.langSelect.addEventListener("change", () => {
     state.language = dom.langSelect.value === "pt-BR" ? "pt-BR" : "en";

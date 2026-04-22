@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>capybara-tty</title>
-    <link rel="stylesheet" href="./styles.css?v=20260422c" />
+    <link rel="stylesheet" href="./styles.css?v=20260423a" />
   </head>
   <body>
     <div id="rotate-message">Rotate device to landscape to play.</div>
 
     <main id="app-shell">
       <header class="top-bar">
-        <span id="app-title">capybara-tty</span>
+        <span id="app-title">Capybara Chess/Capivara Xadrez</span>
         <div class="top-controls">
           <label id="lang-label" for="lang-select">UI</label>
           <select id="lang-select" aria-label="Select interface language">
@@ -19,14 +19,14 @@
             <option value="pt-BR" selected>PT-BR</option>
           </select>
           <button id="panel-toggle" aria-label="Toggle panel list">[≡]</button>
+          <button id="home-button"  aria-label="Home">[🏠]</button>
         </div>
       </header>
 
-      <section id="hero-banner" class="panel-box">
-        <img id="capybara-hero" src="./capybara-tty.png" alt="Capybara mascot" />
-      </section>
-
       <section id="config-menu" class="panel-box">
+        <div id="hero-banner" class="panel-box">
+            <img id="capybara-hero" src="./capybara-tty.png" alt="Capybara mascot" />
+        </div>
         <h1 id="config-title">New Game</h1>
         <div id="config-options"></div>
         <div id="config-actions">
@@ -40,6 +40,7 @@
           <div id="board"></div>
           <div id="sync-indicator" class="hidden">[ WAITING — press SPACE to continue ]</div>
           <div id="game-over-banner" class="hidden"></div>
+          <button id="home-btn" class="hidden" type="button">Home</button>
         </div>
 
         <aside class="panel-column">
@@ -64,6 +65,7 @@
           <p id="play-instructions" class="play-instructions">
             Type your move in PGN notation (examples: e4, Nf3, O-O) and press Enter.
           </p>
+          <p id="player-side" class="play-instructions">You play: White</p>
           <div id="cmd-wrap">
             <label for="cmd-input">> </label>
             <input id="cmd-input" type="text" placeholder="e4, Nf3, O-O..." autocomplete="off" />
@@ -72,6 +74,6 @@
       </section>
     </main>
 
-    <script type="module" src="./main.js?v=20260422c"></script>
+    <script type="module" src="./main.js?v=20260423b"></script>
   </body>
 </html>

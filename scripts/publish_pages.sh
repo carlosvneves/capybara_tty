@@ -5,6 +5,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WWW_DIR="$ROOT_DIR/www"
 DOCS_DIR="$ROOT_DIR/docs"
 
+if [ -d "$DOCS_DIR" ]; then
+  echo "==> Removing previous 'docs'." >&2
+  rm -rf "$DOCS_DIR"
+  mkdir "$DOCS_DIR"
+fi
+
 if ! command -v wasm-pack >/dev/null 2>&1; then
   echo "error: wasm-pack is required but not found in PATH." >&2
   exit 1
