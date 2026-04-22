@@ -159,7 +159,7 @@ const VALUE_LABELS = {
 const state = {
   ready: false,
   gameState: "pre-config",
-  language: "en",
+  language: "pt-BR",
   fen: "",
   moveHistory: [],
   pgnMoves: [],
@@ -227,6 +227,7 @@ function uiValue(value) {
 }
 
 function applyLanguage() {
+  dom.langSelect.value = state.language;
   dom.rotateMessage.textContent = uiText("rotate_message");
   dom.langLabel.textContent = uiText("lang_label");
   dom.configTitle.textContent = uiText("config_title");
