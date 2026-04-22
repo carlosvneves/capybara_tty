@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>capybara-tty</title>
+    <link rel="stylesheet" href="./styles.css?v=20260422b" />
+  </head>
+  <body>
+    <div id="rotate-message">Rotate device to landscape to play.</div>
+
+    <main id="app-shell">
+      <header class="top-bar">
+        <span>capybara-tty</span>
+        <button id="panel-toggle" aria-label="Toggle panel list">[≡]</button>
+      </header>
+
+      <section id="config-menu" class="panel-box">
+        <h1>New Game</h1>
+        <div id="config-options"></div>
+        <div id="config-actions">
+          <button id="start-game-btn" type="button">Start Game</button>
+        </div>
+        <p class="config-hint">Use arrows and Enter to start.</p>
+      </section>
+
+      <section id="game-shell" class="layout hidden">
+        <div class="board-column">
+          <div id="board"></div>
+          <div id="sync-indicator" class="hidden">[ WAITING — press SPACE to continue ]</div>
+          <div id="game-over-banner" class="hidden"></div>
+        </div>
+
+        <aside class="panel-column">
+          <section id="panel-history" class="panel-box">
+            <h2>┌─ Move History ─┐</h2>
+            <div id="move-history">No moves yet</div>
+          </section>
+          <section id="panel-pgn" class="panel-box">
+            <h2>┌─ PGN ─┐</h2>
+            <div id="pgn-text">Game not started</div>
+          </section>
+          <section id="panel-material" class="panel-box">
+            <h2>┌─ Material ─┐</h2>
+            <div id="material-text">Even</div>
+          </section>
+
+          <section id="clock-box" class="panel-box">
+            <h2>┌─ Clock ─┐</h2>
+            <div id="clock-text"></div>
+          </section>
+
+          <div id="cmd-wrap">
+            <label for="cmd-input">> </label>
+            <input id="cmd-input" type="text" placeholder="e4, Nf3, O-O..." autocomplete="off" />
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js?v=20260422b"></script>
+  </body>
+</html>
