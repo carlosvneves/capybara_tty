@@ -64,9 +64,102 @@ const MINUTES_BY_CONTROL = {
   Classical: 30,
 };
 
+const I18N = {
+  en: {
+    rotate_message: "Rotate device to landscape to play.",
+    lang_label: "UI",
+    config_title: "New Game",
+    config_hint: "Use arrows and Enter to start.",
+    start_game: "Start Game",
+    start_unavailable: "Start Unavailable",
+    boot_error: "UI bootstrap failed: WebAssembly module did not load.",
+    boot_hint: "Check devtools/network and confirm pkg path is being served.",
+    panel_history_title: "┌─ Move History ─┐",
+    panel_pgn_title: "┌─ PGN ─┐",
+    panel_material_title: "┌─ Material ─┐",
+    panel_clock_title: "┌─ Clock ─┐",
+    move_history_empty: "No moves yet",
+    pgn_empty: "Game not started",
+    material_even: "Even",
+    play_instructions: "Type your move in PGN notation (examples: e4, Nf3, O-O) and press Enter.",
+    cmd_placeholder: "e4, Nf3, O-O...",
+    sync_waiting: "[ WAITING - press SPACE to continue ]",
+    config_engine: "Engine",
+    config_time_control: "Time Control",
+    config_color: "Play as",
+    config_difficulty: "Difficulty",
+    config_tutor_mode: "Tutor Mode",
+    config_physical_mode: "Physical Board",
+    config_piece_mode: "Pieces",
+    resumed_suffix: "Press Enter or type new for new game.",
+    resigned_suffix: "resigned.",
+  },
+  "pt-BR": {
+    rotate_message: "Gire o dispositivo para o modo paisagem para jogar.",
+    lang_label: "IDIOMA",
+    config_title: "Novo Jogo",
+    config_hint: "Use as setas e Enter para iniciar.",
+    start_game: "Iniciar Jogo",
+    start_unavailable: "Inicio indisponivel",
+    boot_error: "Falha ao iniciar a interface: o modulo WebAssembly nao carregou.",
+    boot_hint: "Verifique o console/rede e confirme se o caminho de pkg esta sendo servido.",
+    panel_history_title: "┌─ Historico de Lances ─┐",
+    panel_pgn_title: "┌─ PGN ─┐",
+    panel_material_title: "┌─ Material ─┐",
+    panel_clock_title: "┌─ Relogio ─┐",
+    move_history_empty: "Nenhum lance ainda",
+    pgn_empty: "Partida nao iniciada",
+    material_even: "Igual",
+    play_instructions: "Digite seu lance em notacao PGN (ex: e4, Nf3, O-O) e pressione Enter.",
+    cmd_placeholder: "e4, Nf3, O-O...",
+    sync_waiting: "[ AGUARDANDO - pressione ESPACO para continuar ]",
+    config_engine: "Motor",
+    config_time_control: "Tempo",
+    config_color: "Jogar com",
+    config_difficulty: "Dificuldade",
+    config_tutor_mode: "Modo Tutor",
+    config_physical_mode: "Tabuleiro Fisico",
+    config_piece_mode: "Pecas",
+    resumed_suffix: "Pressione Enter ou digite new para novo jogo.",
+    resigned_suffix: "desistiu.",
+  },
+};
+
+const CONFIG_LABEL_KEYS = {
+  engine: "config_engine",
+  timeControl: "config_time_control",
+  color: "config_color",
+  difficulty: "config_difficulty",
+  tutorMode: "config_tutor_mode",
+  physicalMode: "config_physical_mode",
+  pieceMode: "config_piece_mode",
+};
+
+const VALUE_LABELS = {
+  Embedded: { en: "Embedded", "pt-BR": "Embutido" },
+  Stockfish: { en: "Stockfish", "pt-BR": "Stockfish" },
+  UltraBullet: { en: "UltraBullet", "pt-BR": "UltraBullet" },
+  Bullet: { en: "Bullet", "pt-BR": "Bullet" },
+  Blitz: { en: "Blitz", "pt-BR": "Blitz" },
+  Rapid: { en: "Rapid", "pt-BR": "Rapida" },
+  Classical: { en: "Classical", "pt-BR": "Classica" },
+  "No clock": { en: "No clock", "pt-BR": "Sem relogio" },
+  Custom: { en: "Custom", "pt-BR": "Personalizado" },
+  White: { en: "White", "pt-BR": "Brancas" },
+  Black: { en: "Black", "pt-BR": "Pretas" },
+  Easy: { en: "Easy", "pt-BR": "Facil" },
+  Medium: { en: "Medium", "pt-BR": "Medio" },
+  Hard: { en: "Hard", "pt-BR": "Dificil" },
+  Off: { en: "Off", "pt-BR": "Desligado" },
+  On: { en: "On", "pt-BR": "Ligado" },
+  Unicode: { en: "Unicode", "pt-BR": "Unicode" },
+  ASCII: { en: "ASCII", "pt-BR": "ASCII" },
+};
+
 const state = {
   ready: false,
   gameState: "pre-config",
+  language: "en",
   fen: "",
   moveHistory: [],
   pgnMoves: [],
@@ -99,6 +192,15 @@ function queryDom() {
   dom.configOptions = document.getElementById("config-options");
   dom.configHint = document.querySelector(".config-hint");
   dom.startGameBtn = document.getElementById("start-game-btn");
+  dom.rotateMessage = document.getElementById("rotate-message");
+  dom.langLabel = document.getElementById("lang-label");
+  dom.langSelect = document.getElementById("lang-select");
+  dom.configTitle = document.getElementById("config-title");
+  dom.panelHistoryTitle = document.getElementById("panel-history-title");
+  dom.panelPgnTitle = document.getElementById("panel-pgn-title");
+  dom.panelMaterialTitle = document.getElementById("panel-material-title");
+  dom.clockTitle = document.getElementById("clock-title");
+  dom.playInstructions = document.getElementById("play-instructions");
   dom.gameShell = document.getElementById("game-shell");
   dom.board = document.getElementById("board");
   dom.syncIndicator = document.getElementById("sync-indicator");
@@ -113,6 +215,30 @@ function queryDom() {
   dom.panelHistory = document.getElementById("panel-history");
   dom.panelPgn = document.getElementById("panel-pgn");
   dom.panelMaterial = document.getElementById("panel-material");
+  dom.syncIndicator = document.getElementById("sync-indicator");
+}
+
+function uiText(key) {
+  return I18N[state.language]?.[key] || I18N.en[key] || key;
+}
+
+function uiValue(value) {
+  return VALUE_LABELS[value]?.[state.language] || VALUE_LABELS[value]?.en || value;
+}
+
+function applyLanguage() {
+  dom.rotateMessage.textContent = uiText("rotate_message");
+  dom.langLabel.textContent = uiText("lang_label");
+  dom.configTitle.textContent = uiText("config_title");
+  dom.configHint.textContent = uiText("config_hint");
+  dom.startGameBtn.textContent = uiText("start_game");
+  dom.panelHistoryTitle.textContent = uiText("panel_history_title");
+  dom.panelPgnTitle.textContent = uiText("panel_pgn_title");
+  dom.panelMaterialTitle.textContent = uiText("panel_material_title");
+  dom.clockTitle.textContent = uiText("panel_clock_title");
+  dom.playInstructions.textContent = uiText("play_instructions");
+  dom.cmdInput.placeholder = uiText("cmd_placeholder");
+  dom.syncIndicator.textContent = uiText("sync_waiting");
 }
 
 async function loadWasmBindings() {
@@ -138,7 +264,7 @@ function wasmApi() {
 }
 
 function showBootError(error) {
-  const message = "UI bootstrap failed: WebAssembly module did not load.";
+  const message = uiText("boot_error");
   dom.configMenu.classList.remove("hidden");
   dom.gameShell.classList.add("hidden");
   dom.configOptions.innerHTML = "";
@@ -147,11 +273,11 @@ function showBootError(error) {
   line.textContent = message;
   dom.configOptions.appendChild(line);
   if (dom.configHint) {
-    dom.configHint.textContent = "Check devtools/network and confirm pkg path is being served.";
+    dom.configHint.textContent = uiText("boot_hint");
   }
   if (dom.startGameBtn) {
     dom.startGameBtn.disabled = true;
-    dom.startGameBtn.textContent = "Start Unavailable";
+    dom.startGameBtn.textContent = uiText("start_unavailable");
   }
   // eslint-disable-next-line no-console
   console.error(message, error);
@@ -221,8 +347,8 @@ function materialFromFen() {
 
 function renderHistory() {
   if (state.moveHistory.length === 0) {
-    dom.moveHistory.textContent = "No moves yet";
-    dom.pgnText.textContent = "Game not started";
+    dom.moveHistory.textContent = uiText("move_history_empty");
+    dom.pgnText.textContent = uiText("pgn_empty");
     return;
   }
   dom.moveHistory.textContent = state.moveHistory.join(" ");
@@ -231,6 +357,9 @@ function renderHistory() {
 
 function renderMaterial() {
   dom.materialText.textContent = materialFromFen();
+  if (dom.materialText.textContent === "Even") {
+    dom.materialText.textContent = uiText("material_even");
+  }
 }
 
 function msToClock(ms) {
@@ -291,9 +420,13 @@ function renderConfigMenu() {
     option.dataset.index = String(index);
     let value = current;
     if (entry.key === "timeControl" && current === "Custom") {
-      value = `Custom (${state.config.customMinutes} min)`;
+      const customLabel = uiValue("Custom");
+      value = `${customLabel} (${state.config.customMinutes} min)`;
+    } else {
+      value = uiValue(value);
     }
-    option.textContent = `${state.selectedConfigIndex === index ? ">" : " "} ${entry.label}: ← ${value} →`;
+    const label = uiText(CONFIG_LABEL_KEYS[entry.key]);
+    option.textContent = `${state.selectedConfigIndex === index ? ">" : " "} ${label}: ← ${value} →`;
     dom.configOptions.appendChild(option);
   });
 }
@@ -343,7 +476,7 @@ function endGame(message) {
   state.gameState = "ended";
   state.waitingPhysicalResume = false;
   dom.syncIndicator.classList.add("hidden");
-  dom.banner.textContent = `${message} Press Enter or type new for new game.`;
+  dom.banner.textContent = `${message} ${uiText("resumed_suffix")}`;
   dom.banner.classList.remove("hidden");
 }
 
@@ -353,7 +486,7 @@ function applyPlayerMove(input) {
     return;
   }
   if (input === "resign") {
-    endGame(`${state.config.color} resigned.`);
+    endGame(`${uiValue(state.config.color)} ${uiText("resigned_suffix")}`);
     dom.cmdInput.value = "";
     return;
   }
@@ -526,6 +659,15 @@ function initKeybindings() {
   dom.startGameBtn.addEventListener("click", () => {
     startGame();
   });
+
+  dom.langSelect.addEventListener("change", () => {
+    state.language = dom.langSelect.value === "pt-BR" ? "pt-BR" : "en";
+    applyLanguage();
+    renderConfigMenu();
+    renderHistory();
+    renderMaterial();
+    updateClockVisual();
+  });
 }
 
 function installClockTicker() {
@@ -540,6 +682,7 @@ function installClockTicker() {
 
 async function bootstrap() {
   queryDom();
+  applyLanguage();
   try {
     wasmBindings = await loadWasmBindings();
   } catch (error) {
