@@ -78,7 +78,18 @@ Use a single command to rebuild wasm and mirror the playable site to `docs/`:
 ./scripts/publish_pages.sh
 ```
 
+#### GitHub Actions Deploy (automatic)
+
+This repository includes a GitHub Actions workflow at `.github/workflows/pages.yml`.
+
+On each push to `master`, it will:
+
+1. Build the Rust/WASM package into `www/pkg`.
+2. Copy `www/` to a temporary `site/` folder.
+3. Deploy `site/` to GitHub Pages.
+
+This means you do **not** need to manually push generated `docs/pkg` files for deployment, as long as the workflow runs successfully.
+
 *“Transforming capybaras into grandmasters, one PGN at a time.”*
 
 *“Transformando capivaras em mestres, um PGN de cada vez.”*
-
